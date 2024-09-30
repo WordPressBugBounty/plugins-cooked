@@ -22,6 +22,7 @@ class Cooked_Recipes {
     public function __construct() {
         add_filter( 'cooked_recipe_content_filter', [&$this, 'vendor_checks'], 1, 1 );
         add_filter( 'the_content', [&$this, 'recipe_template'], 10 );
+
         add_filter( 'parse_query', [&$this, 'custom_taxonomy_in_query'], 10 );
 
         add_action( 'template_redirect', [&$this, 'print_recipe_template'], 10 );
@@ -126,25 +127,26 @@ class Cooked_Recipes {
         wp_reset_postdata();
 
         return $recipes;
-
     }
 
     public static function get_settings( $post_id, $bc = true ) {
-        if ( !$post_id )
-            return;
+        if ( !$post_id ) return;
 
         $recipe_settings = get_post_meta( $post_id, '_recipe_settings', true );
 
-        if ( !is_array( $recipe_settings ) || empty($recipe_settings) ): $recipe_settings = []; endif;
+        if ( !is_array( $recipe_settings ) || empty($recipe_settings) ) {
+            $recipe_settings = [];
+        }
+
         $recipe_settings['title'] = get_the_title( $post_id );
 
         $recipe_post = get_post($post_id);
         $wp_excerpt = $recipe_post->post_excerpt;
 
         // Check for excerpt/content
-        if ( isset($recipe_settings['excerpt']) && !$recipe_settings['excerpt'] && !$wp_excerpt || !isset($recipe_settings['excerpt']) ):
-            wp_update_post(['ID' => $post_id, 'post_excerpt' => $recipe_settings['title']] );
-        endif;
+        // if ( isset($recipe_settings['excerpt']) && !$recipe_settings['excerpt'] && !$wp_excerpt || !isset($recipe_settings['excerpt']) ) {
+        //     wp_update_post(['ID' => $post_id, 'post_excerpt' => $recipe_settings['title']] );
+        // }
 
         // Check for nutrition data
         if ( !isset($recipe_settings['nutrition']) ):
@@ -155,7 +157,7 @@ class Cooked_Recipes {
         // Backwards Compatibility with Cooked 2.x
         if ( !isset($recipe_settings['cooked_version']) && $bc ):
             $c2_recipe_settings = self::get_c2_recipe_meta( $post_id );
-            $recipe_settings = self::sync_c2_recipe_settings( $c2_recipe_settings,$post_id );
+            $recipe_settings = self::sync_c2_recipe_settings( $c2_recipe_settings, $post_id );
         endif;
 
         // Get the author information
@@ -352,23 +354,23 @@ class Cooked_Recipes {
 
     public function print_recipe_template() {
         if ( is_singular('cp_recipe') && isset($_GET['print']) ):
-            load_template( COOKED_DIR . 'templates/front/recipe-print.php',false);
+            load_template( COOKED_DIR . 'templates/front/recipe-print.php', false);
             exit;
         endif;
     }
 
     public static function vendor_checks( $content ) {
-        global $wp_query,$post;
+        global $wp_query, $post;
 
         // WooCommerce Memberships
         if ( function_exists('wc_memberships_user_can') && function_exists('wc_memberships_is_post_content_restricted') && function_exists('wc_memberships_user_can') ):
 
             if ( !is_user_logged_in() && wc_memberships_is_post_content_restricted() ):
-                return WC_Memberships_User_Messages::get_message_html( 'content_restricted', array( 'post' => $post ) );
+                return WC_Memberships_User_Messages::get_message_html( 'content_restricted', ['post' => $post] );
             elseif ( is_user_logged_in() ):
                 $_user = wp_get_current_user();
-                if ( !wc_memberships_user_can( $_user->ID, 'view', array( 'cp_recipe' => $post->ID ) ) ):
-                    return WC_Memberships_User_Messages::get_message_html( 'content_restricted', array( 'post' => $post ) );
+                if ( !wc_memberships_user_can( $_user->ID, 'view', ['cp_recipe' => $post->ID] ) ):
+                    return WC_Memberships_User_Messages::get_message_html( 'content_restricted', ['post' => $post] );
                 endif;
             endif;
 
@@ -581,38 +583,44 @@ class Cooked_Recipes {
     }
 
     public static function pagination( $recipe_query, $recipe_args ) {
-        global $_cooked_settings,$current_recipe_page,$paged,$atts;
+        global $_cooked_settings, $current_recipe_page, $paged, $atts;
 
         $paged = self::current_page();
         $total_recipe_pages = $recipe_query->max_num_pages;
         $pagination = '';
 
-        if ( $total_recipe_pages > 1):
-
+        if ( $total_recipe_pages > 1) {
             do_action( 'cooked_init_pagination', $recipe_args, $current_recipe_page, $total_recipe_pages, $atts );
 
-            $pagination_style = apply_filters( 'cooked_pagination_style', array( 'numbered_pagination' => 'Cooked_Recipes' ) );
+            $pagination_style = apply_filters( 'cooked_pagination_style', ['numbered_pagination' => 'Cooked_Recipes'] );
             $p_method = key( $pagination_style );
             $p_class = current( $pagination_style );
 
             $pagination = $p_class::$p_method( $current_recipe_page, $total_recipe_pages );
-
-        endif;
+        }
 
         return $pagination;
     }
 
-    public static function numbered_pagination( $current_recipe_page, $total_recipe_pages ){
-        $big = 999999999; // need an unlikely integer
+    public static function numbered_pagination( $current_recipe_page, $total_recipe_pages ) {
+        if ( get_option('permalink_structure') ) {
+            $format = '?paged=%#%';
+        } else {
+            $format = 'page/%#%/';
+        }
+
+        $big = 999999999;
+        $base = $format =='?paged=%#%' ? $base = str_replace( $big, '%#%', get_pagenum_link( $big ) ) : $base = @add_query_arg('paged','%#%');
+
         $recipe_pagination = apply_filters( 'cooked_pagination_args', [
-            'base' => str_replace($big, '%#%', get_pagenum_link($big)),
-            'format' => '?paged=%#%',
+            'base' => $base,
+            'format' => $format,
             'mid-size' => 1,
             'current' => $current_recipe_page,
             'total' => $total_recipe_pages,
             'prev_next' => true,
             'prev_text' => '<i class="cooked-icon cooked-icon-angle-left"></i>',
-            'next_text' => '<i class="cooked-icon cooked-icon-angle-right"></i>'
+            'next_text' => '<i class="cooked-icon cooked-icon-angle-right"></i>',
         ]);
         return '<div class="cooked-pagination-numbered cooked-clearfix">' . paginate_links( $recipe_pagination ) . '</div>';
     }
@@ -1100,7 +1108,6 @@ class Cooked_Recipes {
     }
 
     public function recipe_template( $content ) {
-
         global $wp_query, $post, $_cooked_content_unfiltered;
 
         if ( post_password_required() ):
@@ -1108,10 +1115,11 @@ class Cooked_Recipes {
         endif;
 
         if ( is_singular('cp_recipe') && is_main_query() && $_cooked_content_unfiltered == false ):
-
             ob_start();
-            include( COOKED_DIR . 'templates/front/recipe.php' );
-            //load_template( COOKED_DIR . 'templates/front/recipe.php', false );
+
+            include COOKED_DIR . 'templates/front/recipe.php';
+            // load_template( COOKED_DIR . 'templates/front/recipe.php', false );
+
             $recipe_content = ob_get_clean();
             return shortcode_unautop( apply_filters( 'cooked_recipe_content_filter', $recipe_content, $content, $post->ID ) );
 
@@ -1128,7 +1136,6 @@ class Cooked_Recipes {
 
     // Get and return the Cooked 2.x Classic recipe meta information
     public static function get_c2_recipe_meta( $post_id ) {
-
         $recipe_meta = [];
         $revised_array = [];
         $recipe_cs2_meta = get_post_meta($post_id);
