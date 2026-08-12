@@ -1,13 +1,13 @@
 <?php return array(
     'root' => array(
         'name' => 'xjsv/cooked',
-        'pretty_version' => '1.14.0',
-        'version' => '1.14.0.0',
+        'pretty_version' => '1.16.0',
+        'version' => '1.16.0.0',
         'reference' => null,
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'dev' => true,
+        'dev' => false,
     ),
     'versions' => array(
         'nxp/math-executor' => array(
@@ -19,9 +19,24 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'php-units-of-measure/php-units-of-measure' => array(
+            'pretty_version' => 'v2.2.0',
+            'version' => '2.2.0.0',
+            'reference' => 'cf1b83b1ef7615dd53f70864c9e7f496b1ec0fd1',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../php-units-of-measure/php-units-of-measure',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'triplepoint/php-units-of-measure' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
+        ),
         'xjsv/cooked' => array(
-            'pretty_version' => '1.14.0',
-            'version' => '1.14.0.0',
+            'pretty_version' => '1.16.0',
+            'version' => '1.16.0.0',
             'reference' => null,
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',

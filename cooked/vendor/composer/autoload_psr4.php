@@ -6,5 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'PhpUnitsOfMeasure\\' => array($vendorDir . '/php-units-of-measure/php-units-of-measure/source'),
     'NXP\\' => array($vendorDir . '/nxp/math-executor/src/NXP'),
 );

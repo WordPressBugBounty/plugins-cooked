@@ -4,9 +4,13 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit67a35766b07094746ef209d583ffb1f5
+class ComposerStaticInit5fafb24fed0730a4a82cc268b6968bd5
 {
     public static $prefixLengthsPsr4 = array (
+        'P' =>
+        array (
+            'PhpUnitsOfMeasure\\' => 18,
+        ),
         'N' =>
         array (
             'NXP\\' => 4,
@@ -14,6 +18,10 @@ class ComposerStaticInit67a35766b07094746ef209d583ffb1f5
     );
 
     public static $prefixDirsPsr4 = array (
+        'PhpUnitsOfMeasure\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source',
+        ),
         'NXP\\' =>
         array (
             0 => __DIR__ . '/..' . '/nxp/math-executor/src/NXP',
@@ -37,14 +45,41 @@ class ComposerStaticInit67a35766b07094746ef209d583ffb1f5
         'NXP\\Exception\\UnknownOperatorException' => __DIR__ . '/..' . '/nxp/math-executor/src/NXP/Exception/UnknownOperatorException.php',
         'NXP\\Exception\\UnknownVariableException' => __DIR__ . '/..' . '/nxp/math-executor/src/NXP/Exception/UnknownVariableException.php',
         'NXP\\MathExecutor' => __DIR__ . '/..' . '/nxp/math-executor/src/NXP/MathExecutor.php',
+        'PhpUnitsOfMeasure\\AbstractPhysicalQuantity' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/AbstractPhysicalQuantity.php',
+        'PhpUnitsOfMeasure\\Exception\\AbstractPhysicalQuantityException' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/AbstractPhysicalQuantityException.php',
+        'PhpUnitsOfMeasure\\Exception\\DuplicateUnitNameOrAlias' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/DuplicateUnitNameOrAlias.php',
+        'PhpUnitsOfMeasure\\Exception\\NonNumericValue' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/NonNumericValue.php',
+        'PhpUnitsOfMeasure\\Exception\\NonStringUnitName' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/NonStringUnitName.php',
+        'PhpUnitsOfMeasure\\Exception\\PhysicalQuantityMismatch' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/PhysicalQuantityMismatch.php',
+        'PhpUnitsOfMeasure\\Exception\\UnknownUnitOfMeasure' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/Exception/UnknownUnitOfMeasure.php',
+        'PhpUnitsOfMeasure\\HasSIUnitsTrait' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/HasSIUnitsTrait.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantityInterface' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantityInterface.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Acceleration' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Acceleration.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Angle' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Angle.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Area' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Area.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\ElectricCurrent' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/ElectricCurrent.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Energy' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Energy.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Length' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Length.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\LuminousIntensity' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/LuminousIntensity.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Mass' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Mass.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Power' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Power.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Pressure' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Pressure.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Quantity' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Quantity.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\SolidAngle' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/SolidAngle.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Temperature' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Temperature.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Time' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Time.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Velocity' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Velocity.php',
+        'PhpUnitsOfMeasure\\PhysicalQuantity\\Volume' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/PhysicalQuantity/Volume.php',
+        'PhpUnitsOfMeasure\\UnitOfMeasure' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/UnitOfMeasure.php',
+        'PhpUnitsOfMeasure\\UnitOfMeasureInterface' => __DIR__ . '/..' . '/php-units-of-measure/php-units-of-measure/source/UnitOfMeasureInterface.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit67a35766b07094746ef209d583ffb1f5::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit67a35766b07094746ef209d583ffb1f5::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit67a35766b07094746ef209d583ffb1f5::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit5fafb24fed0730a4a82cc268b6968bd5::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit5fafb24fed0730a4a82cc268b6968bd5::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit5fafb24fed0730a4a82cc268b6968bd5::$classMap;
 
         }, null, ClassLoader::class);
     }

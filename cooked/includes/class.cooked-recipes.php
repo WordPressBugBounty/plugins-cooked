@@ -31,6 +31,37 @@ class Cooked_Recipes {
         add_action( 'restrict_manage_posts', [&$this, 'filter_recipes_by_taxonomy'], 10 );
 
         add_filter('get_canonical_url', [&$this, 'modify_browse_page_canonical_url'], 20, 2);
+        add_filter( 'post_thumbnail_id', [ __CLASS__, 'filter_default_recipe_thumbnail' ], 10, 2 );
+    }
+
+    public static function filter_default_recipe_thumbnail( $thumbnail_id, $post ) {
+        if ( $thumbnail_id ) {
+            return $thumbnail_id;
+        }
+
+        if ( is_admin() && ! wp_doing_ajax() ) {
+            return $thumbnail_id;
+        }
+
+        $post = get_post( $post );
+
+        if ( ! $post || $post->post_type !== 'cp_recipe' ) {
+            return $thumbnail_id;
+        }
+
+        global $_cooked_settings;
+
+        if ( empty( $_cooked_settings ) ) {
+            $_cooked_settings = Cooked_Settings::get();
+        }
+
+        $default_image_id = isset( $_cooked_settings['default_recipe_image'] ) ? absint( $_cooked_settings['default_recipe_image'] ) : 0;
+
+        if ( $default_image_id && wp_attachment_is_image( $default_image_id ) ) {
+            return $default_image_id;
+        }
+
+        return $thumbnail_id;
     }
 
     public static function get( $args = false, $single = false, $ids_only = false, $limit = false, $ids_and_titles_only = false, $post_status = 'publish' ) {
@@ -63,7 +94,7 @@ class Cooked_Recipes {
             endif;
 
             if ( $limit ):
-                $args['limit'] = $limit;
+                $args['posts_per_page'] = $limit;
             endif;
 
         // Search Query
@@ -348,6 +379,37 @@ class Cooked_Recipes {
         endif;
     }
 
+    public static function print_logo() {
+        global $_cooked_settings;
+
+        $print_view_options = isset( $_cooked_settings['print_view_display_options'] ) && is_array( $_cooked_settings['print_view_display_options'] )
+            ? $_cooked_settings['print_view_display_options']
+            : [];
+
+        if ( ! in_array( 'site_logo', $print_view_options, true ) ) {
+            return;
+        }
+
+        echo '<div id="cooked-print-logo">';
+
+        $logo_id = get_theme_mod( 'custom_logo' );
+        if ( $logo_id ) {
+            echo wp_get_attachment_image(
+                $logo_id,
+                'full',
+                false,
+                [
+                    'alt' => get_bloginfo( 'name' ),
+                    'class' => 'cooked-print-logo-image',
+                ]
+            );
+        } else {
+            echo '<span class="cooked-print-logo-text">' . esc_html( get_bloginfo( 'name' ) ) . '</span>';
+        }
+
+        echo '</div>';
+    }
+
     public static function vendor_checks( $content ) {
         global $wp_query, $post;
 
@@ -621,8 +683,51 @@ class Cooked_Recipes {
         return '<div class="cooked-pagination-numbered cooked-clearfix">' . paginate_links( $recipe_pagination ) . '</div>';
     }
 
+    public static function content_has_self_recipe_embed_shortcode( $content, $recipe_id ) {
+        if ( ! is_string( $content ) || ! $recipe_id ) {
+            return false;
+        }
+
+        $recipe_id = intval( $recipe_id );
+
+        if ( ! preg_match_all( '#\[cooked-recipe\b[^\]]*\bid\s*=\s*["\']?(\d+)#i', $content, $matches ) ) {
+            return false;
+        }
+
+        foreach ( $matches[1] as $embedded_id ) {
+            if ( intval( $embedded_id ) === $recipe_id ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function settings_have_self_recipe_embed_shortcode( $recipe_settings, $post_id ) {
+        if ( ! is_array( $recipe_settings ) || empty( $recipe_settings ) || ! $post_id ) {
+            return false;
+        }
+
+        $fields = [ 'content', 'notes', 'excerpt' ];
+        foreach ( $fields as $field ) {
+            if ( ! empty( $recipe_settings[ $field ] ) && self::content_has_self_recipe_embed_shortcode( $recipe_settings[ $field ], $post_id ) ) {
+                return true;
+            }
+        }
+
+        if ( ! empty( $recipe_settings['directions'] ) && is_array( $recipe_settings['directions'] ) ) {
+            foreach ( $recipe_settings['directions'] as $direction ) {
+                if ( ! empty( $direction['content'] ) && self::content_has_self_recipe_embed_shortcode( $direction['content'], $post_id ) ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static function default_content() {
-        return apply_filters( 'cooked_default_content', '<p>[cooked-info left="author,taxonomies,difficulty" right="print,fullscreen"]</p><p>[cooked-excerpt]</p><p>[cooked-image]</p><p>[cooked-info left="servings" right="prep_time,cook_time,total_time"]</p><p>[cooked-ingredients]</p><p>[cooked-directions]</p><p>[cooked-notes show_header=true]</p><p>[cooked-gallery]</p>' );
+        return apply_filters( 'cooked_default_content', '<p>[cooked-info left="author,taxonomies,difficulty" right="print,fullscreen"]</p><p>[cooked-excerpt]</p><p>[cooked-image]</p><p>[cooked-info left="servings" right="prep_time,cook_time,total_time"]</p><p>[cooked-info left="allergens"]</p><p>[cooked-ingredients]</p><p>[cooked-directions]</p><p>[cooked-notes show_header=true]</p><p>[cooked-gallery]</p>' );
     }
 
     public static function print_content() {
@@ -819,6 +924,32 @@ class Cooked_Recipes {
         return $gallery_types;
     }
 
+    public static function measurement_system_switcher() {
+        global $_cooked_settings, $post;
+        $switcher_enabled = ( isset( $_cooked_settings['advanced'] ) && in_array( 'enable_measurement_switcher', $_cooked_settings['advanced'] ) ? true : false );
+        $printing = ( is_singular('cp_recipe') && isset($_GET['print']) );
+
+        if ( !$printing && $switcher_enabled ):
+            $current = esc_html( get_query_var( 'measurement_system', '' ) );
+            $labels = [
+                '' => __( 'Default', 'cooked' ),
+                'metric' => __( 'Metric', 'cooked' ),
+                'imperial' => __( 'Imperial', 'cooked' ),
+            ];
+            $current_label = isset( $labels[ $current ] ) ? $labels[ $current ] : $labels[''];
+            echo '<span class="cooked-measurement-system"><span class="cooked-measurement-system-icon"><i class="cooked-icon cooked-icon-gear"></i></span>';
+                echo '<strong class="cooked-meta-title">' . __( 'Units', 'cooked' ) . '</strong>';
+                echo '<a aria-label="' . esc_attr( $current_label ) . '" href="#">' . esc_html( $current_label ) . '</a>';
+                echo '<label for="cooked-measurement-system-changer" class="screen-reader-text">' . __( 'Measurement System', 'cooked' ) . '</label>';
+                echo '<select id="cooked-measurement-system-changer" name="measurement_system" class="cooked-measurement-system-changer">';
+                    echo '<option value=""' . selected( $current, '', false ) . '>' . __( 'Default', 'cooked' ) . '</option>';
+                    echo '<option value="metric"' . selected( $current, 'metric', false ) . '>' . __( 'Metric', 'cooked' ) . '</option>';
+                    echo '<option value="imperial"' . selected( $current, 'imperial', false ) . '>' . __( 'Imperial', 'cooked' ) . '</option>';
+                echo '</select>';
+            echo '</span>';
+        endif;
+    }
+
     public static function serving_size_switcher( $servings ) {
         global $_cooked_settings, $post;
         $switcher_disabled = ( isset( $_cooked_settings['advanced'] ) && in_array( 'disable_servings_switcher', $_cooked_settings['advanced'] ) ? true : false );
@@ -937,8 +1068,26 @@ class Cooked_Recipes {
                 }
             }
 
-            $measurement = ( isset($ing['measurement']) && $ing['measurement'] ? esc_html( $ing['measurement'] ) : false );
-            $measurement = ( $measurement && $float_amount ? $Cooked_Measurements->singular_plural( $measurements[ $measurement ]['singular_abbr'], $measurements[ $measurement ]['plural_abbr'], $float_amount ) : false );
+            $measurement_key = ( isset($ing['measurement']) && $ing['measurement'] ? esc_html( $ing['measurement'] ) : false );
+
+            $measurement_system = get_query_var( 'measurement_system', '' );
+            if ( $measurement_system && $measurement_key && $float_amount && isset( $measurements[ $measurement_key ]['system'] ) ) {
+                $source_system = $measurements[ $measurement_key ]['system'];
+                if ( $source_system && $source_system !== $measurement_system ) {
+                    $target = Cooked_Unit_Converter::get_target_unit( $measurement_key );
+                    $result = $target ? Cooked_Unit_Converter::convert( $float_amount, $measurement_key, $target ) : null;
+                    if ( $result ) {
+                        $float_amount = $result['amount'];
+                        $measurement_key = $result['unit'];
+                        if ( $float_amount > 10 ) {
+                            $format = 'decimal';
+                        }
+                        $amount = $Cooked_Measurements->format_amount( $float_amount, $format );
+                    }
+                }
+            }
+
+            $measurement = ( $measurement_key && $float_amount && isset( $measurements[ $measurement_key ] ) ? $Cooked_Measurements->singular_plural( $measurements[ $measurement_key ]['singular_abbr'], $measurements[ $measurement_key ]['plural_abbr'], $float_amount ) : false );
 
             $name = ( isset($ing['name']) && $ing['name'] ? apply_filters( 'cooked_ingredient_name', wp_kses_post( $ing['name'] ), $ing ) : false );
 
@@ -968,6 +1117,23 @@ class Cooked_Recipes {
                 }
 
                 $sub_measurement_key = ( isset($ing['sub_measurement']) && $ing['sub_measurement'] ? esc_html( $ing['sub_measurement'] ) : false );
+
+                if ( $measurement_system && $sub_measurement_key && $sub_float_amount && isset( $measurements[ $sub_measurement_key ]['system'] ) ) {
+                    $sub_source_system = $measurements[ $sub_measurement_key ]['system'];
+                    if ( $sub_source_system && $sub_source_system !== $measurement_system ) {
+                        $sub_target = Cooked_Unit_Converter::get_target_unit( $sub_measurement_key );
+                        $sub_result = $sub_target ? Cooked_Unit_Converter::convert( $sub_float_amount, $sub_measurement_key, $sub_target ) : null;
+                        if ( $sub_result ) {
+                            $sub_float_amount = $sub_result['amount'];
+                            $sub_measurement_key = $sub_result['unit'];
+                            if ( $sub_float_amount > 10 ) {
+                                $sub_format = 'decimal';
+                            }
+                            $sub_amount = $Cooked_Measurements->format_amount( $sub_float_amount, $sub_format );
+                        }
+                    }
+                }
+
                 $sub_measurement = ( $sub_measurement_key && $sub_float_amount && isset($measurements[$sub_measurement_key]) ? $Cooked_Measurements->singular_plural( $measurements[ $sub_measurement_key ]['singular_abbr'], $measurements[ $sub_measurement_key ]['plural_abbr'], $sub_float_amount ) : false );
             }
 
@@ -1020,11 +1186,12 @@ class Cooked_Recipes {
                 echo '<' . $element . ' class="cooked-single-direction cooked-heading">' . esc_html($dir['section_heading_name']) . '</' . $element . '>';
             }
 
-        } elseif (isset($dir['content']) && $dir['content'] || isset($dir['image']) && $dir['image']) {
+        } elseif ( !empty($dir['content']) || !empty($dir['image']) || !empty($dir['video']) ) {
 
             $dir_image_size = apply_filters( 'cooked_direction_image_size', 'large' );
-            $image = isset($dir['image']) && $dir['image'] ? wp_get_attachment_image( $dir['image'], $dir_image_size, false, ['title' => esc_attr(get_the_title($dir['image']))] ) : '';
+            $image = !empty($dir['image']) ? wp_get_attachment_image( $dir['image'], $dir_image_size, false, ['title' => esc_attr(get_the_title($dir['image']))] ) : '';
             $content = !empty($dir['content']) ? Cooked_Recipes::format_content($dir['content']) : '';
+            $video = !empty($dir['video']) ? wp_get_attachment_url($dir['video']) : '';
 
             $image = apply_filters('cooked_direction_image_html', $image, $atts);
 
@@ -1036,7 +1203,7 @@ class Cooked_Recipes {
 
                 echo '<div id="cooked-single-direction-step-'. $number .'" class="cooked-single-direction cooked-direction' . ($image ? ' cooked-direction-has-image' : '') . ( $number ? ' cooked-direction-has-number' . ( $number > 9 ? '-wide' : '' ) : '' ) . '"' . ( $step ? ' data-step="' . $step_string . '"' : '' ) . '>';
                     echo $number ? '<span class="cooked-direction-number">' . esc_html($number) . '</span>' : '';
-                    echo '<div class="cooked-dir-content">' . do_shortcode($content) . ($image ? wpautop($image) : '') . '</div>';
+                    echo '<div class="cooked-dir-content">' . do_shortcode($content) . ($image ? wpautop($image) : '') . ($video ? '<video class="cooked-direction-video" src="' . esc_url($video) . '" controls preload="metadata" playsinline></video>' : '') . '</div>';
                 echo '</div>';
             }
         }
