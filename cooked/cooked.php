@@ -5,13 +5,13 @@
  * Description: 	    A recipe plugin for WordPress.
  * Author:              Gora Tech
  * Author URI: 	        https://goratech.dev
- * Version: 		    1.16.0
+ * Version: 		    1.16.1
  * Text Domain: 	    cooked
  * Domain Path: 	    /languages
  * License:     	    GPLv2 or later
  * License URI:         https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least:   6.8
- * Tested up to:        7.0
+ * Tested up to:        7.1
  * Requires PHP:        7.4
  * Contributors:        xjsv, boxystudio
  * Tags:                recipe, recipes, food, cooking, nutrition
@@ -40,7 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/vendor/autoload.php';
 
 define( 'COOKED_DEV', false );
-define( 'COOKED_VERSION', '1.16.0' );
+define( 'COOKED_VERSION', '1.16.1' );
 
 if ( ! class_exists( 'Cooked_Plugin' ) ) :
 
@@ -240,6 +240,14 @@ final class Cooked_Plugin {
      * @since 1.8.7
      */
     public $extra;
+
+    /**
+     * Cooked Pixwell Theme Support Object.
+     *
+     * @var object|Cooked_Pixwell
+     * @since 1.16.0
+     */
+    public $pixwell;
 
     /**
      * Main Cooked_Plugin Instance.
@@ -535,6 +543,7 @@ final class Cooked_Plugin {
             load_textdomain( 'cooked', $lang_file_ext );
         } else {
             // Load the default language files.
+            // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Bundled /languages .mo files.
             load_plugin_textdomain( 'cooked', false, COOKED_FOLDER . '/languages' );
         }
     }
